@@ -95,6 +95,7 @@ wss.on('connection', (ws) => {
                 const start = points[i];
                 const end = points[(i + 1) % points.length]; // Connect to the next point, looping to the first
                 drawLine(start.x, start.y, end.x, end.y, color);
+                console.log("drawing ...");
             }
         }
     });
