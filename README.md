@@ -1,6 +1,6 @@
 # install
 1. flash armbian  	Minimal / IOT -> bookworm 	 image on sd card.
-2. apt install python3 python3-pip xorg git python3-opencv python3-tk python3-pil python3-pil.imagetk
+2. apt install python3 python3-pip xorg git python3-opencv python3-tk python3-pil python3-pil.imagetk python3-flask python3-flask-socketio
 
 add to /etc/X11/xorg.conf.d/01-armbian-defaults.conf:
 ```
