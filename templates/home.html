@@ -1,0 +1,32 @@
+{% include 'header.html' %}
+<h1>Status der Logdatei</h1>
+<table id="logTable">
+    <thead>
+        <tr>
+            <th>Zeitstempel</th>
+            <th>Meldung</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Die Logeinträge werden hier eingefügt -->
+    </tbody>
+</table>
+
+<script>
+    const socket = io();
+    socket.on('connect', function () {
+        socket.emit('request_log'); // Anforderung der Logdaten beim Server
+    });
+
+    socket.on('update_log', function (data) {
+        const tbody = document.getElementById('logTable').getElementsByTagName('tbody')[0];
+        tbody.innerHTML = ''; // Tabelle leeren
+        data.forEach(function (log) {
+            let row = `<tr><td>${log.timestamp}</td><td>${log.message}</td></tr>`;
+            tbody.innerHTML += row; // Zeile zur Tabelle hinzufügen
+        });
+    });
+</script>
+</body>
+
+</html>

@@ -1,0 +1,2 @@
+#!/usr/bin/bash
+python /home/rock/mappedplayer/display.py &> /home/rock/mappedplayer/log.txt

@@ -1,0 +1,155 @@
+{% include 'header.html' %}
+<form id="config-form">
+    <table>
+        <tr>
+            <td>System name:</td>
+            <td><input class="auto-form" name="hostname" type="text"></td>
+        </tr>
+        <tr>
+            <td>Mode:</td>
+            <td>
+                <select class="auto-form" name="mode">
+                    <option>setup</option>
+                    <option>player</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td><button type="submit">Save</button></td>
+        </tr>
+    </table>
+</form>
+
+<h2>Displays Configuration</h2>
+<button id="add-display">Add Display</button>
+<button id="save-displays">Save Displays</button>
+<canvas id="display-canvas" width="640" height="360" style="border: 1px solid black;"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script>
+    const canvas = new fabric.Canvas('display-canvas');
+    const socket = io();
+
+    let displays = [];
+
+    var reportmousemove = function (params) {
+        const x = params.pointer.x;
+        const y = params.pointer.y;
+        socket.emit('mouse_move', { x, y });
+    };
+
+    var customEvtHandler = function (evt) {
+        var modifiedObject = evt.target;
+        console.log(modifiedObject.get('left'), modifiedObject.get('top'));
+    };
+
+    canvas.on({
+        'mouse:move': reportmousemove
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Fetch configuration on page load
+        fetch('/setup/config')
+            .then(response => response.json())
+            .then(data => {
+                // Populate form
+                for (const key in data) {
+                    const element = document.querySelector(`[name="${key}"]`);
+                    if (element) {
+                        element.value = data[key];
+                    }
+                }
+
+                // Load displays
+                if (data.displays) {
+                    displays = data.displays;
+                    renderDisplays();
+                }
+            });
+
+        // Form submission
+        document.getElementById('config-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const config = Object.fromEntries(formData.entries());
+
+            fetch('/setup/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Configuration saved successfully!');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+        });
+
+        // Add new display
+        document.getElementById('add-display').addEventListener('click', function () {
+            const newDisplay = {
+                name: `Display ${Date.now()}`,
+                position: [100, 100, 200, 200],
+                angle: 0
+            };
+            displays.push(newDisplay);
+            renderDisplays();
+        });
+
+        // Save displays
+        document.getElementById('save-displays').addEventListener('click', function () {
+            const updatedDisplays = canvas.getObjects().map(obj => ({
+                name: obj.name,
+                position: [obj.left, obj.top, obj.left + obj.width * obj.scaleX, obj.top + obj.height * obj.scaleY],
+                angle: obj.angle,
+                left: obj.left,
+                top: obj.top,
+                width: obj.width,
+                scaleX: obj.scaleX,
+                height: obj.height,
+                scaleY: obj.scaleY
+            }));
+
+            fetch('/setup/displays', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ displays: updatedDisplays })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Displays saved successfully!');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+        });
+    });
+
+    function renderDisplays() {
+        canvas.clear();
+
+        displays.forEach(display => {
+            const rect = new fabric.Rect({
+                left: display.position[0],
+                top: display.position[1],
+                width: display.position[2] - display.position[0],
+                height: display.position[3] - display.position[1],
+                fill: 'rgba(0,0,255,0.3)',
+                stroke: 'blue',
+                strokeWidth: 2,
+                angle: display.angle || 0,
+                name: display.name,
+                hasControls: true,
+                lockScalingFlip: true
+            });
+
+            canvas.add(rect);
+        });
+
+        canvas.renderAll();
+    }
+</script>
