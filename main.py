@@ -103,13 +103,16 @@ def update_displays():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+display_socket = -1
+
 def notify_display(config):
-    display_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    global display_socket
+    display_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
     try:
-        client_socket.connect(('localhost', 6000))  # Die Adresse und Portnummer muss mit display.py übereinstimmen
-        client_socket.send(json.dumps(config).encode())
+        display_socket.connect(('localhost', 6000))  # Die Adresse und Portnummer muss mit display.py übereinstimmen
+        display_socket.send(json.dumps(config).encode())
     finally:
-        client_socket.close()
+        display_socket.close()
 
 def read_log():
     log_entries = []
